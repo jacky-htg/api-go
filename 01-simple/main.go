@@ -5,6 +5,7 @@ import (
 	"time"
 	"net/http"
 	"encoding/json"
+	"strconv"
 )
 
 type User struct {
@@ -23,13 +24,14 @@ func main() {
     users = append(users, User{ ID: 1, Name: "Jacky Chan"})
     users = append(users, User{ ID: 2, Name: "Jet Lee", Email: "jet@lee.com"})
     
-    router.HandleFunc("/api/users", GetUserEndPoint).Methods("GET")
+    router.HandleFunc("/api/users", GetUsersEndPoint).Methods("GET")
     router.HandleFunc("/api/users", CreateUserEndPoint).Methods("POST")
+    router.HandleFunc("/api/users/{id}", GetUserEndPoint).Methods("GET")
     
     http.ListenAndServe(":9090", router)
 }
 
-func GetUserEndPoint(w http.ResponseWriter, _ *http.Request) {
+func GetUsersEndPoint(w http.ResponseWriter, _ *http.Request) {
     json.NewEncoder(w).Encode(users)
 }
 
@@ -55,4 +57,18 @@ func CreateUserEndPoint(w http.ResponseWriter, req *http.Request) {
     
     users = append(users, user)    
     json.NewEncoder(w).Encode(user)
+}
+
+func GetUserEndPoint(w http.ResponseWriter, req *http.Request) {
+    params := mux.Vars(req)
+    id, _  := strconv.ParseInt(params["id"], 10, 64)
+    
+    for _, v := range users {
+        if v.ID == id {
+            json.NewEncoder(w).Encode(v)
+            return
+        }
+    }      
+    
+    json.NewEncoder(w).Encode(&User{})
 }
