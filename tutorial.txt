@@ -36,6 +36,7 @@ func GetInt(key string)(int) {
 pada file main.go tambahkan import : "github.com/jacky-htg/api-go/02-config-file/config"
 dan pada func main(), ubah baris http.ListenAndServe menjadi : http.ListenAndServe(config.GetString("server.address"), router)
 ----------------------------------------------------------------
+pada bab 3 kita akan membuat struktur aplikasi sesuai konsep MVC
 - copy folder 02-config dan paste dengan nama 03-mvc
 - buat folder controllers, models, repositories, dan libraries
 - pindahkan semua func struct dan var ke file controllers/userController.go, sehingga fi file main.go hanya ada func main() beserta import yang dibutuhkan.
@@ -182,4 +183,124 @@ func GetString(key string)(string) {
 
 func GetInt(key string)(int) {
 	return viper.GetInt(key)
+}
+---------------------------------------------------------------------------------------
+Pada bab 4 kita akan melakukan operasi database menggunakan mysql.
+- copy folder 04-mvc dan paste dengan nama 04-mysql-db
+- di file config/config.json tambahakan konfigurasi untuk database
+{
+    "server": {
+        "address": ":9090"
+    },
+    "database": {
+        "driverName": "mysql",
+        "dataSourceName": "root:rebel@/api_go"
+    }
+}
+root adalah user, rebel adalah password, dan api_go adalah nama database.
+buatlah database dengan nama api_go, dan table users dengan struktur berikut :
+
+CREATE TABLE `users` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(45) NOT NULL,
+  `email` varchar(128) NOT NULL,
+  `password` varchar(120) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email_UNIQUE` (`email`);
+
+ALTER TABLE `users_bak`
+    MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+- pada file models/user.go tambahakan field password
+- pada file controllers/userController.go fungsi CreateUser tambahkan validasi password
+if len(user.Password) == 0 {
+		json.NewEncoder(w).Encode("Please suplay valid password")
+		return
+	}
+
+
+- pada file repositories/userRepository.go tambahkan import:
+    "database/sql"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jacky-htg/api-go/04-mysql-db/libraries"
+    "github.com/jacky-htg/api-go/04-mysql-db/config
+
+- tambahkan code berikut:
+var db *sql.DB
+var err error
+- dan hapus kode var users []User karena kita tidak lagi menyimpan data users dalam memory.
+
+- tambahkan fungsi init untuk membangun koneksi database
+
+func init() {
+	// Create an sql.DB and check for errors
+	db, err = sql.Open(config.GetString("database.driverName"), config.GetString("database.dataSourceName"))
+	libraries.CheckError(err)
+
+	// Test the connection to the database
+	err = db.Ping()
+	libraries.CheckError(err)
+}
+
+- kemudian ubah kode sebelumnya menjadi sepertoi berikut :
+func GetUsers() ([]models.User) {
+	rows, err := db.Query("SELECT id, name, email, password FROM users")
+
+	libraries.CheckError(err)
+
+	var users []models.User
+
+	for rows.Next() {
+		var id int64
+		var name string
+		var email string
+		var password string
+		err = rows.Scan(&id, &name, &email, &password)
+		libraries.CheckError(err)
+		users = append(users, models.User{ID:id, Name:name, Email:email})
+	}
+
+	return users
+}
+
+func CreateUser(user models.User) (models.User)  {
+	stmt, err := db.Prepare("INSERT INTO users (name, email, password, created_at) VALUES (?, ?, ?, NOW())")
+	libraries.CheckError(err)
+
+	res, err := stmt.Exec(user.Name, user.Email, user.Password)
+	libraries.CheckError(err)
+
+	id, err := res.LastInsertId()
+	libraries.CheckError(err)
+
+	user.ID = id
+
+	return user
+}
+
+func GetUser(paramId int64) (models.User)  {
+	rows, err := db.Query("SELECT id, name, email, password FROM users WHERE id=?", paramId)
+	libraries.CheckError(err)
+	defer rows.Close()
+
+	var id int64
+	var name string
+	var email string
+	var password string
+
+	for rows.Next() {
+		err := rows.Scan(&id, &name, &email, &password)
+		libraries.CheckError(err)
+	}
+
+	err = rows.Err()
+	libraries.CheckError(err)
+
+	return models.User{ID:id, Name:name, Email:email}
 }
