@@ -36,4 +36,116 @@ func GetInt(key string)(int) {
 pada file main.go tambahkan import : "github.com/jacky-htg/api-go/02-config-file/config"
 dan pada func main(), ubah baris http.ListenAndServe menjadi : http.ListenAndServe(config.GetString("server.address"), router)
 ----------------------------------------------------------------
+- copy folder 02-config dan paste dengan nama 03-mvc
+- buat folder controllers, models, repositories, dan libraries
+- pindahkan semua func struct dan var ke file controllers/userController.go, sehingga fi file main.go hanya ada func main() beserta import yang dibutuhkan.
+- jangan lupa tambahkan import 03-mvc/controllers di file main.go
+sehingga isi dari file main.go jadi seperti ini:
+package main
 
+import (
+	"github.com/gorilla/mux"
+	"net/http"
+	"github.com/jacky-htg/api-go/02-config-file/config"
+	"github.com/jacky-htg/api-go/03-mvc/controllers"
+)
+
+func main() {
+	router := mux.NewRouter()
+
+	router.HandleFunc("/api/users", controllers.GetUsersEndPoint).Methods("GET")
+	router.HandleFunc("/api/users", controllers.CreateUserEndPoint).Methods("POST")
+	router.HandleFunc("/api/users/{id}", controllers.GetUserEndPoint).Methods("GET")
+
+	http.ListenAndServe(config.GetString("server.address"), router)
+}
+
+- dari file controllers/userController.go pindahkan type User ke file models/user.go
+package models
+
+import "time"
+
+type User struct {
+	ID	        int64
+	Name        string
+	Email       string
+	CreatedAt   time.Time
+	UpdateAt    time.Time
+	DeletedAt   time.Time
+}
+
+- import models, dan ubah semua baris User menjadi models.user
+- pindahkan semua operasi data ke file repositories/userRepository.go
+package repositories
+
+import (
+	"time"
+	"github.com/jacky-htg/api-go/03-mvc/models"
+)
+
+var users []models.User
+
+func GetUsers()([]models.User) {
+	return users
+}
+
+func CreateUser(user models.User)(models.User) {
+	user.ID         = int64(len(users)+1)
+	user.CreatedAt  = time.Now()
+
+	users = append(users, user)
+	return user
+}
+
+func GetUser(id int64)(models.User) {
+	for _, v := range users {
+		if v.ID == id {
+			return v
+		}
+	}
+
+	return models.User{}
+}
+
+- panggil fungsi2 di userRepository.go di controllers/userCOntroller.go
+package controllers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"github.com/gorilla/mux"
+	"github.com/jacky-htg/api-go/03-mvc/models"
+	"github.com/jacky-htg/api-go/03-mvc/repositories"
+)
+
+func GetUsersEndPoint(w http.ResponseWriter, _ *http.Request) {
+	json.NewEncoder(w).Encode(repositories.GetUsers())
+}
+
+func CreateUserEndPoint(w http.ResponseWriter, req *http.Request) {
+	var user models.User
+
+	user.Name   = req.FormValue("name")
+	user.Email  = req.FormValue("email")
+
+	// Validation
+	if len(user.Name) == 0 {
+		json.NewEncoder(w).Encode("Please suplay valid name")
+		return
+	}
+
+	if len(user.Email) == 0 {
+		json.NewEncoder(w).Encode("Please suplay valid email")
+		return
+	}
+
+	json.NewEncoder(w).Encode(repositories.CreateUser(user))
+}
+
+func GetUserEndPoint(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+	id, _  := strconv.ParseInt(params["id"], 10, 64)
+
+	json.NewEncoder(w).Encode(repositories.GetUser(id))
+}
