@@ -149,3 +149,37 @@ func GetUserEndPoint(w http.ResponseWriter, req *http.Request) {
 
 	json.NewEncoder(w).Encode(repositories.GetUser(id))
 }
+
+- terakhir kita kan memindahkan handling error ke dalam file libraries/generic.go
+buat file libraries/generic.go yang berisi :
+package libraries
+
+import "fmt"
+
+func CheckError(err error){
+	if err != nil {
+		fmt.Println(err.Error())
+		panic(err.Error())
+	}
+}
+- buka file config/config.go dan ubah handling error dg memanggil fungsi CheckError()
+package config
+
+import (
+	"github.com/spf13/viper"
+	"github.com/jacky-htg/api-go/03-mvc/libraries"
+)
+
+func init() {
+	viper.SetConfigFile("./config/config.json")
+	err := viper.ReadInConfig()
+	libraries.CheckError(err)
+}
+
+func GetString(key string)(string) {
+	return viper.GetString(key)
+}
+
+func GetInt(key string)(int) {
+	return viper.GetInt(key)
+}

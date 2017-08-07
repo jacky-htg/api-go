@@ -2,16 +2,13 @@ package config
 
 import (
 	"github.com/spf13/viper"
-	"fmt"
+	"github.com/jacky-htg/api-go/03-mvc/libraries"
 )
 
 func init() {
 	viper.SetConfigFile("./config/config.json")
 	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Println(err.Error())
-		panic(err.Error())
-	}
+	libraries.CheckError(err)
 }
 
 func GetString(key string)(string) {
