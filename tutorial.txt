@@ -1,0 +1,39 @@
+bab 2 adalah tutorial untuk membuat file configurasi menggunakan viper.
+- copy folder 01-simple, paste dengan nama 02-config-file
+- buat folder config yang berisi 2 file, yaitu file config.json dan config.go
+- file config.json berisi konfigurasi dari aplikasi kita dalam bentuk json
+{
+    "server": {
+        "address": ":9090"
+    }
+}
+
+- file config.go berisi kode menggunakan viper untuk membaca file config.json
+package config
+
+import (
+	"github.com/spf13/viper"
+	"fmt"
+)
+
+func init() {
+	viper.SetConfigFile("./config/config.json")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println(err.Error())
+		panic(err.Error())
+	}
+}
+
+func GetString(key string)(string) {
+	return viper.GetString(key)
+}
+
+func GetInt(key string)(int) {
+	return viper.GetInt(key)
+}
+
+pada file main.go tambahkan import : "github.com/jacky-htg/api-go/02-config-file/config"
+dan pada func main(), ubah baris http.ListenAndServe menjadi : http.ListenAndServe(config.GetString("server.address"), router)
+----------------------------------------------------------------
+

@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"strconv"
-	"github.com/spf13/viper"
-	"fmt"
+	"github.com/jacky-htg/api-go/02-config-file/config"
 )
 
 type User struct {
@@ -22,13 +21,6 @@ type User struct {
 var users []User
 
 func main() {
-    viper.SetConfigFile("config.json")
-    err := viper.ReadInConfig()
-    if err != nil {
-        fmt.Println(err.Error())
-        panic(err.Error())
-    }
-    
     router := mux.NewRouter()
     users = append(users, User{ ID: 1, Name: "Jacky Chan"})
     users = append(users, User{ ID: 2, Name: "Jet Lee", Email: "jet@lee.com"})
@@ -36,8 +28,8 @@ func main() {
     router.HandleFunc("/api/users", GetUsersEndPoint).Methods("GET")
     router.HandleFunc("/api/users", CreateUserEndPoint).Methods("POST")
     router.HandleFunc("/api/users/{id}", GetUserEndPoint).Methods("GET")
-    
-    http.ListenAndServe(viper.GetString("server.address"), router)
+
+    http.ListenAndServe(config.GetString("server.address"), router)
 }
 
 func GetUsersEndPoint(w http.ResponseWriter, _ *http.Request) {
