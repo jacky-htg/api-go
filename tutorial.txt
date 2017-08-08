@@ -38,6 +38,7 @@ dan pada func main(), ubah baris http.ListenAndServe menjadi : http.ListenAndSer
 ----------------------------------------------------------------
 pada bab 3 kita akan membuat struktur aplikasi sesuai konsep MVC
 - copy folder 02-config dan paste dengan nama 03-mvc
+- pastikan semua import yang mengarah ke 02-config diubah ke 03-mvc
 - buat folder controllers, models, repositories, dan libraries
 - pindahkan semua func struct dan var ke file controllers/userController.go, sehingga fi file main.go hanya ada func main() beserta import yang dibutuhkan.
 - jangan lupa tambahkan import 03-mvc/controllers di file main.go
@@ -186,7 +187,8 @@ func GetInt(key string)(int) {
 }
 ---------------------------------------------------------------------------------------
 Pada bab 4 kita akan melakukan operasi database menggunakan mysql.
-- copy folder 04-mvc dan paste dengan nama 04-mysql-db
+- copy folder 03-mvc dan paste dengan nama 04-mysql-db
+- pastikan semua import yang mengarah ke 03-mvc diubah ke 04-mysql-db
 - di file config/config.json tambahakan konfigurasi untuk database
 {
     "server": {
@@ -225,18 +227,17 @@ if len(user.Password) == 0 {
 	}
 
 
-- pada file repositories/userRepository.go tambahkan import:
-    "database/sql"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jacky-htg/api-go/04-mysql-db/libraries"
-    "github.com/jacky-htg/api-go/04-mysql-db/config
+- buat file repositories/repository.go
+package repositories
 
-- tambahkan code berikut:
+import (
+	"database/sql"
+	"github.com/jacky-htg/api-go/04-mysql-db/config"
+	"github.com/jacky-htg/api-go/04-mysql-db/libraries"
+)
+
 var db *sql.DB
 var err error
-- dan hapus kode var users []User karena kita tidak lagi menyimpan data users dalam memory.
-
-- tambahkan fungsi init untuk membangun koneksi database
 
 func init() {
 	// Create an sql.DB and check for errors
@@ -248,7 +249,15 @@ func init() {
 	libraries.CheckError(err)
 }
 
-- kemudian ubah kode sebelumnya menjadi sepertoi berikut :
+
+- pada file repositories/userRepository.go tambahkan import:
+    _ "github.com/go-sql-driver/mysql"
+	"github.com/jacky-htg/api-go/04-mysql-db/libraries"
+    "github.com/jacky-htg/api-go/04-mysql-db/models"
+
+- hapus kode var users []User karena kita tidak lagi menyimpan data users dalam memory.
+
+- kemudian ubah kode sebelumnya menjadi seperti berikut :
 func GetUsers() ([]models.User) {
 	rows, err := db.Query("SELECT id, name, email, password FROM users")
 
@@ -303,4 +312,55 @@ func GetUser(paramId int64) (models.User)  {
 	libraries.CheckError(err)
 
 	return models.User{ID:id, Name:name, Email:email}
+}
+
+- karena ada penambahana field password pada entity user, maka file controllers/userController.go juga mengalamai perubahan menjadi seperti berikut:
+package controllers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"github.com/gorilla/mux"
+	"github.com/jacky-htg/api-go/04-mysql-db/models"
+	"github.com/jacky-htg/api-go/04-mysql-db/repositories"
+	"golang.org/x/crypto/bcrypt"
+)
+
+func GetUsersEndPoint(w http.ResponseWriter, _ *http.Request) {
+	json.NewEncoder(w).Encode(repositories.GetUsers())
+}
+
+func CreateUserEndPoint(w http.ResponseWriter, req *http.Request) {
+	var user models.User
+
+	user.Name   = req.FormValue("name")
+	user.Email  = req.FormValue("email")
+	password   := req.FormValue("password")
+
+	// Validation
+	if len(user.Name) == 0 {
+		json.NewEncoder(w).Encode("Please suplay valid name")
+		return
+	}
+
+	if len(user.Email) == 0 {
+		json.NewEncoder(w).Encode("Please suplay valid email")
+		return
+	}
+
+	if len(password) == 0 {
+		json.NewEncoder(w).Encode("Please suplay valid password")
+		return
+	}
+
+	user.Password, _ = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	json.NewEncoder(w).Encode(repositories.CreateUser(user))
+}
+
+func GetUserEndPoint(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+	id, _  := strconv.ParseInt(params["id"], 10, 64)
+
+	json.NewEncoder(w).Encode(repositories.GetUser(id))
 }
