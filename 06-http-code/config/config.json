@@ -1,0 +1,9 @@
+{
+    "server": {
+        "address": ":9090"
+    },
+    "database": {
+        "driverName": "mysql",
+        "dataSourceName": "root:rebel@/api_go"
+    }
+}
