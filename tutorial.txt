@@ -364,3 +364,85 @@ func GetUserEndPoint(w http.ResponseWriter, req *http.Request) {
 
 	json.NewEncoder(w).Encode(repositories.GetUser(id))
 }
+---------------------------------------------------------------------------
+pada bab 5 kita akan mempelajari tentang auth token menggunakan jwt-token
+- copy folder 04-mysql-db dan paste dengan nama 05-token
+- pastikan semua import yang mengarah ke 04-mysql-db diubah ke 05-token
+- pada func main() kita tambhakan routing untuk handling token
+router.HandleFunc("/api/get-token",  controllers.GetTokenHandler).Methods("POST")
+- buat method baru di userRepository :
+func GetPwdByEmail(inputEmail string)(string, error){
+	rows, err := db.Query("SELECT password FROM users WHERE email=?", inputEmail)
+	libraries.CheckError(err)
+
+	defer rows.Close()
+
+	var databasePassword string
+
+	for rows.Next() {
+		err := rows.Scan(&databasePassword)
+		libraries.CheckError(err)
+	}
+
+	err = rows.Err()
+	libraries.CheckError(err)
+
+	return databasePassword, err
+}
+- buat middleware untuk handle token. buat file libraries/token.go yang berisi
+package libraries
+
+import (
+	"github.com/dgrijalva/jwt-go"
+	"time"
+)
+
+type MyCustomClaims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
+var mySigningKey = []byte("secret-rahasia")
+
+func ValidateToken(myToken string) (bool, string) {
+	token, err := jwt.ParseWithClaims(myToken, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(mySigningKey), nil
+	})
+
+	if err != nil {
+		return false, ""
+	}
+
+	claims := token.Claims.(*MyCustomClaims)
+	return token.Valid, claims.Username
+}
+
+func ClaimToken(username string) (string, error){
+	claims := MyCustomClaims{
+		username,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 5).Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Sign the token with our secret
+	return token.SignedString(mySigningKey)
+}
+
+fungsi ClaimToken digunakan untuk mendapatkan token, fungsi ValidateToken digunakan untuk memvalidasi token
+- buat controller baru, controllers/authController.go untuk menghandle token
+- pada setiap handle function di controller, sisipkan kode validasi token di bagian atas
+
+    if (len(req.Header["Token"]) == 0) {
+    		json.NewEncoder(w).Encode("Please suplay valid token")
+    		return
+    	}
+
+    	isTokenValid, _ := libraries.ValidateToken(req.Header["Token"][0])
+
+    	if !isTokenValid {
+    		json.NewEncoder(w).Encode("token tidak valid")
+    		return
+    	}
