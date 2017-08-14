@@ -2,8 +2,8 @@ package main
 
 import (
 	"net/http"
-	"github.com/jacky-htg/api-go/06-redis/config"
-	"github.com/jacky-htg/api-go/06-redis/routing"
+	"github.com/jacky-htg/api-go/06-http-code/config"
+	"github.com/jacky-htg/api-go/06-http-code/routing"
 )
 
 func main() {

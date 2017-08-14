@@ -3,7 +3,7 @@ package routing
 import (
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/jacky-htg/api-go/06-redis/controllers"
+	"github.com/jacky-htg/api-go/06-http-code/controllers"
 )
 
 type Route struct {

@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 	"github.com/gorilla/mux"
-	"github.com/jacky-htg/api-go/06-redis/models"
-	"github.com/jacky-htg/api-go/06-redis/repositories"
+	"github.com/jacky-htg/api-go/06-http-code/models"
+	"github.com/jacky-htg/api-go/06-http-code/repositories"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/jacky-htg/api-go/06-redis/libraries"
+	"github.com/jacky-htg/api-go/06-http-code/libraries"
 )
 
 var err error

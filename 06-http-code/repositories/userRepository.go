@@ -1,9 +1,9 @@
 package repositories
 
 import (
-	"github.com/jacky-htg/api-go/06-redis/models"
+	"github.com/jacky-htg/api-go/06-http-code/models"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jacky-htg/api-go/06-redis/libraries"
+	"github.com/jacky-htg/api-go/06-http-code/libraries"
 )
 
 func GetUsers() ([]models.User, error) {

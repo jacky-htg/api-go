@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"database/sql"
-	"github.com/jacky-htg/api-go/06-redis/config"
-	"github.com/jacky-htg/api-go/06-redis/libraries"
+	"github.com/jacky-htg/api-go/06-http-code/config"
+	"github.com/jacky-htg/api-go/06-http-code/libraries"
 )
 
 var db *sql.DB

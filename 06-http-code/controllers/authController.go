@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"golang.org/x/crypto/bcrypt"
 	"encoding/json"
-	"github.com/jacky-htg/api-go/06-redis/repositories"
-	"github.com/jacky-htg/api-go/06-redis/libraries"
+	"github.com/jacky-htg/api-go/06-http-code/repositories"
+	"github.com/jacky-htg/api-go/06-http-code/libraries"
 )
 
 func GetTokenHandler(w http.ResponseWriter, req *http.Request) {

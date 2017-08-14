@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/spf13/viper"
-	"github.com/jacky-htg/api-go/06-redis/libraries"
+	"github.com/jacky-htg/api-go/06-http-code/libraries"
 )
 
 func init() {
